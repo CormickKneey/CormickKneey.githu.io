@@ -15,11 +15,13 @@
 <meta property="og:site_name" content="Inception">
 <meta property="og:description" content="GPM模型定义于src&#x2F;runtime&#x2F;runtime2.go: G: Gourtines, 每个Goroutine对应一个G结构体，G保存Goroutine的运行堆栈，即并发任务状态。G并非执行体，每个G需要绑定到P才能被调度执行。P: Processors, 对G来说，P相当于CPU核，G只有绑定到P(在P的local runq中)才能被调度。对M来说，P提供了相关的执行环境(Context)">
 <meta property="og:locale" content="cn">
+<meta property="og:image" content="http://yoursite.com/assets/blogimg/gpm%E6%A8%A1%E5%9E%8B.png">
 <meta property="article:published_time" content="2020-06-23T05:51:12.000Z">
-<meta property="article:modified_time" content="2020-06-23T06:40:51.045Z">
+<meta property="article:modified_time" content="2020-06-23T06:43:17.814Z">
 <meta property="article:author" content="Cormick Kneey">
 <meta property="article:tag" content="golang">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/assets/blogimg/gpm%E6%A8%A1%E5%9E%8B.png">
   
   
     <link rel="icon" href="/assets/img/favicon.png">
@@ -171,11 +173,7 @@
       
         <p>GPM模型定义于src/runtime/runtime2.go:</p>
 <p>G: <strong>Gourtines</strong>, 每个Goroutine对应一个G结构体，G保存Goroutine的运行堆栈，即并发任务状态。G并非执行体，每个G需要绑定到P才能被调度执行。<br>P: <strong>Processors</strong>, 对G来说，P相当于CPU核，G只有绑定到P(在P的local runq中)才能被调度。对M来说，P提供了相关的执行环境(Context)，如内存分配状态(mcache)，任务队列(G)等<br>M: <strong>Machine</strong>, OS线程抽象，负责调度任务，和某个P绑定，从P的runq中不断取出G，切换堆栈并执行，M本身不具备执行状态，在需要任务切换时，M将堆栈状态写回G，任何其它M都能据此恢复执行。</p>
-<p>GPM模型示意图:</p>
-<div align=center>
-![GPM模型](/assets/blogimg/gpm模型.png)
-</div>
-
+<p>GPM模型示意图:<br>                                  <img src="/assets/blogimg/gpm%E6%A8%A1%E5%9E%8B.png" alt="GPM模型"></p>
 <p>Tips:</p>
 <ol>
 <li>P的个数通过 runtime.GOMAXPROCS() 指定，限制了最大并发数(在物理机/虚拟机上可以超过核数)</li>
