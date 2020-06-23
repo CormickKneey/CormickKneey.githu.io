@@ -6,13 +6,15 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="http://yoursite.com">
-  <title>Inception</title>
+  <title>redis底层数据结构 | Inception</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="Inception">
-<meta property="og:url" content="http://yoursite.com/index.html">
+  <meta property="og:type" content="article">
+<meta property="og:title" content="redis底层数据结构">
+<meta property="og:url" content="http://yoursite.com/2020/06/23/redis%E5%BA%95%E5%B1%82%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/index.html">
 <meta property="og:site_name" content="Inception">
 <meta property="og:locale" content="cn">
+<meta property="article:published_time" content="2020-06-23T13:33:30.000Z">
+<meta property="article:modified_time" content="2020-06-23T13:33:30.412Z">
 <meta property="article:author" content="Cormick Kneey">
 <meta name="twitter:card" content="summary">
   
@@ -144,103 +146,14 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
-  
-    <article id="post-golang下的设计模式-创建型模式" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+            <article id="post-redis底层数据结构" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/2020/06/24/golang%E4%B8%8B%E7%9A%84%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/">golang下的设计模式-创建型模式</a>
-    </h1>
-  
-
-        
-        <a href="/2020/06/24/golang%E4%B8%8B%E7%9A%84%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/" class="archive-article-date">
-  	<time datetime="2020-06-23T18:38:27.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-06-24</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h3 id="创建型模式介绍"><a href="#创建型模式介绍" class="headerlink" title="创建型模式介绍"></a>创建型模式介绍</h3><p><strong>隐藏了类的实例的创建细节,方法</strong></p>
-<blockquote>
-<p>创建型模式(Creational Pattern)对类的实例化过程进行了抽象，能够将软件模块中对象的创建和对象的使用分离。为了使软件的结构更加清晰，外界对于这些对象只需要知道它们共同的接口，而不清楚其具体的实现细节，使整个系统的设计更加符合单一职责原则。</p>
-</blockquote>
-<h4 id="工厂方法模式-Factory-Method-★★★★★"><a href="#工厂方法模式-Factory-Method-★★★★★" class="headerlink" title="- 工厂方法模式(Factory Method)★★★★★"></a>- 工厂方法模式(Factory Method)★★★★★</h4><blockquote>
-<p>工厂方法模式使用子类的方式延迟生成对象到子类中实现。</p>
-</blockquote>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//Operator 是被封装的实际类接口</span></span><br><span class="line"><span class="keyword">type</span> Operator <span class="keyword">interface</span> &#123;</span><br><span class="line">	SetA(<span class="keyword">int</span>)</span><br><span class="line">	SetB(<span class="keyword">int</span>)</span><br><span class="line">	Result() <span class="keyword">int</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//OperatorFactory 是工厂接口</span></span><br><span class="line"><span class="keyword">type</span> OperatorFactory <span class="keyword">interface</span> &#123;</span><br><span class="line">	Create() Operator</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//OperatorBase 是Operator 接口实现的基类，封装公用方法</span></span><br><span class="line"><span class="keyword">type</span> OperatorBase <span class="keyword">struct</span> &#123;</span><br><span class="line">	a, b <span class="keyword">int</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//SetA 设置 A</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(o *OperatorBase)</span> <span class="title">SetA</span><span class="params">(a <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">	o.a = a</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//SetB 设置 B</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(o *OperatorBase)</span> <span class="title">SetB</span><span class="params">(b <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">	o.b = b</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//PlusOperatorFactory 是 PlusOperator 的工厂类</span></span><br><span class="line"><span class="keyword">type</span> PlusOperatorFactory <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(PlusOperatorFactory)</span> <span class="title">Create</span><span class="params">()</span> <span class="title">Operator</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> &amp;PlusOperator&#123;</span><br><span class="line">		OperatorBase: &amp;OperatorBase&#123;&#125;,</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//PlusOperator Operator 的实际加法实现</span></span><br><span class="line"><span class="keyword">type</span> PlusOperator <span class="keyword">struct</span> &#123;</span><br><span class="line">	*OperatorBase</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//Result 获取结果</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(o PlusOperator)</span> <span class="title">Result</span><span class="params">()</span> <span class="title">int</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> o.a + o.b</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//MinusOperatorFactory 是 MinusOperator 的工厂类</span></span><br><span class="line"><span class="keyword">type</span> MinusOperatorFactory <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(MinusOperatorFactory)</span> <span class="title">Create</span><span class="params">()</span> <span class="title">Operator</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> &amp;MinusOperator&#123;</span><br><span class="line">		OperatorBase: &amp;OperatorBase&#123;&#125;,</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//MinusOperator Operator 的实际减法实现</span></span><br><span class="line"><span class="keyword">type</span> MinusOperator <span class="keyword">struct</span> &#123;</span><br><span class="line">	*OperatorBase</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//Result 获取结果</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(o MinusOperator)</span> <span class="title">Result</span><span class="params">()</span> <span class="title">int</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> o.a - o.b</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="抽象工厂模式-Abstract-Factory-★★★★★"><a href="#抽象工厂模式-Abstract-Factory-★★★★★" class="headerlink" title="- 抽象工厂模式(Abstract Factory)★★★★★"></a>- 抽象工厂模式(Abstract Factory)★★★★★</h4><blockquote>
-<p>抽象工厂模式用于生成产品族的工厂，所生成的对象是有关联的。</p>
-</blockquote>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> <span class="string">"fmt"</span></span><br><span class="line"><span class="comment">//OrderMainDAO 为订单主记录</span></span><br><span class="line"><span class="keyword">type</span> OrderMainDAO <span class="keyword">interface</span> &#123;</span><br><span class="line">	SaveOrderMain()</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//OrderDetailDAO 为订单详情纪录</span></span><br><span class="line"><span class="keyword">type</span> OrderDetailDAO <span class="keyword">interface</span> &#123;</span><br><span class="line">	SaveOrderDetail()</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//DAOFactory DAO 抽象模式工厂接口</span></span><br><span class="line"><span class="keyword">type</span> DAOFactory <span class="keyword">interface</span> &#123;</span><br><span class="line">	CreateOrderMainDAO() OrderMainDAO</span><br><span class="line">	CreateOrderDetailDAO() OrderDetailDAO</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//RDBMainDAP 为关系型数据库的OrderMainDAO实现</span></span><br><span class="line"><span class="keyword">type</span> RDBMainDAO <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line"><span class="comment">//SaveOrderMain ...</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(*RDBMainDAO)</span> <span class="title">SaveOrderMain</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Print(<span class="string">"rdb main save\n"</span>)</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//RDBDetailDAO 为关系型数据库的OrderDetailDAO实现</span></span><br><span class="line"><span class="keyword">type</span> RDBDetailDAO <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line"><span class="comment">// SaveOrderDetail ...</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(*RDBDetailDAO)</span> <span class="title">SaveOrderDetail</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Print(<span class="string">"rdb detail save\n"</span>)</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//RDBDAOFactory 是RDB 抽象工厂实现</span></span><br><span class="line"><span class="keyword">type</span> RDBDAOFactory <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(*RDBDAOFactory)</span> <span class="title">CreateOrderMainDAO</span><span class="params">()</span> <span class="title">OrderMainDAO</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> &amp;RDBMainDAO&#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(*RDBDAOFactory)</span> <span class="title">CreateOrderDetailDAO</span><span class="params">()</span> <span class="title">OrderDetailDAO</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> &amp;RDBDetailDAO&#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//XMLMainDAO XML存储</span></span><br><span class="line"><span class="keyword">type</span> XMLMainDAO <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line"><span class="comment">//SaveOrderMain ...</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(*XMLMainDAO)</span> <span class="title">SaveOrderMain</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Print(<span class="string">"xml main save\n"</span>)</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//XMLDetailDAO XML存储</span></span><br><span class="line"><span class="keyword">type</span> XMLDetailDAO <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line"><span class="comment">// SaveOrderDetail ...</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(*XMLDetailDAO)</span> <span class="title">SaveOrderDetail</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Print(<span class="string">"xml detail save"</span>)</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//XMLDAOFactory 是RDB 抽象工厂实现</span></span><br><span class="line"><span class="keyword">type</span> XMLDAOFactory <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(*XMLDAOFactory)</span> <span class="title">CreateOrderMainDAO</span><span class="params">()</span> <span class="title">OrderMainDAO</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> &amp;XMLMainDAO&#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(*XMLDAOFactory)</span> <span class="title">CreateOrderDetailDAO</span><span class="params">()</span> <span class="title">OrderDetailDAO</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> &amp;XMLDetailDAO&#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="单例模式-Singleton-★★★★☆"><a href="#单例模式-Singleton-★★★★☆" class="headerlink" title="- 单例模式(Singleton)★★★★☆"></a>- 单例模式(Singleton)★★★★☆</h4><blockquote>
-<p>使用懒惰模式的单例模式，使用双重检查加锁保证线程安全</p>
-</blockquote>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//Singleton 是单例模式类</span></span><br><span class="line"><span class="keyword">type</span> Singleton <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line"><span class="keyword">var</span> singleton *Singleton</span><br><span class="line"><span class="keyword">var</span> once sync.Once</span><br><span class="line"><span class="comment">//GetInstance 用于获取单例模式对象</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">GetInstance</span><span class="params">()</span> *<span class="title">Singleton</span></span> &#123;</span><br><span class="line">	once.Do(<span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		singleton = &amp;Singleton&#123;&#125;</span><br><span class="line">	&#125;)</span><br><span class="line">	<span class="keyword">return</span> singleton</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="剩余的三种模式"><a href="#剩余的三种模式" class="headerlink" title="剩余的三种模式"></a>剩余的三种模式</h4><ol>
-<li>简单工厂模式（Simple Factory）★★★★☆</li>
-<li>建造者模式（Builder）★★☆☆☆</li>
-<li>原型模式（Prototype）★★★☆☆</li>
-</ol>
-<p>参考</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2020/06/24/golang%E4%B8%8B%E7%9A%84%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-redis底层数据结构" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2020/06/23/redis%E5%BA%95%E5%B1%82%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/">redis底层数据结构</a>
+    <h1 class="article-title" itemprop="name">
+      redis底层数据结构
     </h1>
   
 
@@ -257,6 +170,37 @@
       
 
       
+        <div class="page-reward">
+          <a href="javascript:;" class="page-reward-btn tooltip-top">
+            <div class="tooltip tooltip-east">
+            <span class="tooltip-item">
+              赏
+            </span>
+            <span class="tooltip-content">
+              <span class="tooltip-text">
+                <span class="tooltip-inner">
+                  <p class="reward-p"><i class="icon icon-quo-left"></i>谢谢你请我吃糖果<i class="icon icon-quo-right"></i></p>
+                  <div class="reward-box">
+                    
+                    <div class="reward-box-item">
+                      <img class="reward-img" src="/assets/img/alipay.png">
+                      <span class="reward-type">支付宝</span>
+                    </div>
+                    
+                    
+                    <div class="reward-box-item">
+                      <img class="reward-img" src="/assets/img/wechat.png">
+                      <span class="reward-type">微信</span>
+                    </div>
+                    
+                  </div>
+                </span>
+              </span>
+            </span>
+          </div>
+          </a>
+        </div>
+      
     </div>
     <div class="article-info article-info-index">
       
@@ -264,16 +208,84 @@
       
 
       
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2020/06/23/redis%E5%BA%95%E5%B1%82%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/">展开全文 >></a>
-        </p>
-      
 
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
+        </div>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=http://yoursite.com/2020/06/23/redis%E5%BA%95%E5%B1%82%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
       
       <div class="clearfix"></div>
     </div>
   </div>
 </article>
+
+  
+<nav id="article-nav">
+  
+    <a href="/2020/06/24/golang%E4%B8%8B%E7%9A%84%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/" id="article-nav-newer" class="article-nav-link-wrap">
+      <i class="icon-circle-left"></i>
+      <div class="article-nav-title">
+        
+          golang下的设计模式-创建型模式
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2020/06/23/%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">滑动窗口</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
 
 <aside class="wrap-side-operation">
     <div class="mod-side-operation">
@@ -293,195 +305,14 @@
 
 
 
-
   
-    <article id="post-滑动窗口" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/2020/06/23/%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3/">滑动窗口</a>
-    </h1>
   
 
-        
-        <a href="/2020/06/23/%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3/" class="archive-article-date">
-  	<time datetime="2020-06-23T07:02:54.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-06-23</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="1-无重复字符的最长子串"><a href="#1-无重复字符的最长子串" class="headerlink" title="1. 无重复字符的最长子串"></a>1. 无重复字符的最长子串</h2><p><strong><em>题目描述</em></strong><br>给定一个字符串，请你找出其中不含有重复字符的 最长子串 的长度。<br><a href="https://leetcode-cn.com/problems/longest-substring-without-repeating-characters/" target="_blank" rel="noopener">Leetcode链接</a><br>示例 1:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">输入: &quot;abcabcbb&quot;</span><br><span class="line">输出: 3</span><br><span class="line">解释: 因为无重复字符的最长子串是 &quot;abc&quot;，所以其长度为 3。</span><br></pre></td></tr></table></figure>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">示例 2:</span><br><span class="line"></span><br><span class="line">输入: &quot;bbbbb&quot;</span><br><span class="line">输出: 1</span><br><span class="line">解释: 因为无重复字符的最长子串是 &quot;b&quot;，所以其长度为 1。</span><br></pre></td></tr></table></figure>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">示例 3:</span><br><span class="line"></span><br><span class="line">输入: &quot;pwwkew&quot;</span><br><span class="line">输出: 3</span><br><span class="line">解释: 因为无重复字符的最长子串是 &quot;wke&quot;，所以其长度为 3。</span><br><span class="line">     请注意，你的答案必须是 子串 的长度，&quot;pwke&quot; 是一个子序列，不是子串。</span><br></pre></td></tr></table></figure>
-
-<h4 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h4><ol>
-<li>固定左边界，右边界++，将所有byte存入map 并map[byte]++</li>
-<li>当map[byte]!=0,记录此时的cur_len，并比较 ans = max(cur_len,ans)</li>
-<li>return ans</li>
-</ol>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 运行时间:16 ms	 内存消耗:2.8 MB</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">lengthOfLongestSubstring</span><span class="params">(s <span class="keyword">string</span>)</span> <span class="title">int</span></span> &#123;</span><br><span class="line">    record := <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="keyword">byte</span>]<span class="keyword">int</span>,<span class="number">0</span>)</span><br><span class="line">    right, ans := <span class="number">-1</span>, <span class="number">0</span></span><br><span class="line">    <span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="built_in">len</span>(s); i++ &#123;</span><br><span class="line">        <span class="keyword">if</span> i != <span class="number">0</span> &#123;</span><br><span class="line">            <span class="built_in">delete</span>(record, s[i<span class="number">-1</span>])    <span class="comment">// 删除前一个byte--》左边界右移</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">for</span> right + <span class="number">1</span> &lt; <span class="built_in">len</span>(s) &amp;&amp; record[s[right+<span class="number">1</span>]] == <span class="number">0</span> &#123;<span class="comment">//满足右边界右移条件</span></span><br><span class="line">            record[s[right+<span class="number">1</span>]] = <span class="number">1</span> <span class="comment">//标记存在过的key</span></span><br><span class="line">            right++</span><br><span class="line">        &#125;</span><br><span class="line">        ans = max(ans, right - i + <span class="number">1</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> ans</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">max</span><span class="params">(x, y <span class="keyword">int</span>)</span> <span class="title">int</span></span> &#123;</span><br><span class="line">    <span class="keyword">if</span> x &lt; y &#123;</span><br><span class="line">        <span class="keyword">return</span> y</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> x</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">//改良版:    运行时间: 4ms  内存消耗:2.6MB</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">lengthOfLongestSubstring</span><span class="params">(s <span class="keyword">string</span>)</span> <span class="title">int</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> Length <span class="keyword">int</span></span><br><span class="line">	<span class="keyword">var</span> s1 <span class="keyword">string</span></span><br><span class="line">	left := <span class="number">0</span></span><br><span class="line">	right := <span class="number">0</span></span><br><span class="line">	s1 = s[left:right]</span><br><span class="line">	<span class="keyword">for</span> ; right &lt; <span class="built_in">len</span>(s); right++ &#123;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> index := strings.IndexByte(s1, s[right]); index != <span class="number">-1</span> &#123; <span class="comment">//s[right]不在s1里，则添加进去</span></span><br><span class="line">			left += index + <span class="number">1</span></span><br><span class="line">		&#125;</span><br><span class="line">		s1 = s[left : right+<span class="number">1</span>]</span><br><span class="line">		<span class="keyword">if</span> <span class="built_in">len</span>(s1) &gt; Length &#123;</span><br><span class="line">			Length = <span class="built_in">len</span>(s1)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> Length</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">algorithm</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">滑动窗口</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2020/06/23/%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-GPM模型" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2020/06/23/GPM%E6%A8%A1%E5%9E%8B/">GPM模型与调度</a>
-    </h1>
   
 
-        
-        <a href="/2020/06/23/GPM%E6%A8%A1%E5%9E%8B/" class="archive-article-date">
-  	<time datetime="2020-06-23T05:51:12.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-06-23</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h3 id="GPM模型介绍"><a href="#GPM模型介绍" class="headerlink" title="GPM模型介绍"></a>GPM模型介绍</h3><p>定义于src/runtime/runtime2.go:</p>
-<p>G: <strong>Gourtines</strong>, 每个Goroutine对应一个G结构体，G保存Goroutine的运行堆栈，即并发任务状态。G并非执行体，每个G需要绑定到P才能被调度执行。<br>P: <strong>Processors</strong>, 对G来说，P相当于CPU核，G只有绑定到P(在P的local runq中)才能被调度。对M来说，P提供了相关的执行环境(Context)，如内存分配状态(mcache)，任务队列(G)等<br>M: <strong>Machine</strong>, OS线程抽象，负责调度任务，和某个P绑定，从P的runq中不断取出G，切换堆栈并执行，M本身不具备执行状态，在需要任务切换时，M将堆栈状态写回G，任何其它M都能据此恢复执行。</p>
-<p>GPM模型示意图:<br>                                  <img src="/assets/blogimg/gpm%E6%A8%A1%E5%9E%8B.png" alt="GPM模型"></p>
-<p>Tips:</p>
-<ol>
-<li>P的个数通过 runtime.GOMAXPROCS() 指定，限制了最大并发数(在物理机/虚拟机上可以超过核数)</li>
-<li>thrieads := runtime.GOMAXPROCS(0) 创建与核数相等的goroutine</li>
-<li>M的个数由GO Runtime调整,默认上限1w个</li>
-</ol>
-<h3 id="调度时机"><a href="#调度时机" class="headerlink" title="调度时机"></a>调度时机</h3><p>1.go 关键词</p>
-<blockquote>
-<p>创建一个新的goroutine ，Go scheduler考虑调度</p>
-</blockquote>
-<p>2.Garbage Collection</p>
-<blockquote>
-<p>GC goroutine 同样需要M</p>
-</blockquote>
-<p>3.系统调用</p>
-<blockquote>
-<p>某个goroutine进行syscall，必然阻塞M，此时会发生调度</p>
-</blockquote>
-<p>4.内存同步访问</p>
-<blockquote>
-<p>atomic ， mutex ， channel 等会使goroutine阻塞并调度，待解锁后，重新调度</p>
-</blockquote>
-<h4 id="如何查看调度器状态"><a href="#如何查看调度器状态" class="headerlink" title="如何查看调度器状态?"></a>如何查看调度器状态?</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">GODEBUG&#x3D;schedtrace&#x3D;1000 .&#x2F;test</span><br><span class="line">&#x2F;&#x2F;每隔1000ms查看一次调度器状态</span><br></pre></td></tr></table></figure>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">golang</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2020/06/23/GPM%E6%A8%A1%E5%9E%8B/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
   
+
   
 
 
@@ -504,8 +335,8 @@
     <script>
 	var yiliaConfig = {
 		mathjax: false,
-		isHome: true,
-		isPost: false,
+		isHome: false,
+		isPost: true,
 		isArchive: false,
 		isTag: false,
 		isCategory: false,
