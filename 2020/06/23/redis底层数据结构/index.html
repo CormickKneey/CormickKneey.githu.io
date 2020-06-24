@@ -8,15 +8,21 @@
   <link rel="dns-prefetch" href="http://yoursite.com">
   <title>redis底层数据结构 | Inception</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="article">
+  <meta name="description" content="1. List链表实质是链表，节点Node由三部分组成  前指针prev,后指针next,value本节点值  12345678struct list&amp;#123;  listNode *head;   &#x2F;&#x2F;队列第一个节点的指针  listNode *tail;   &#x2F;&#x2F;队列最后一个节点的指针  unsigned long len; &#x2F;&#x2F; 队列元素数量  void *(*dup)(void *ptr">
+<meta property="og:type" content="article">
 <meta property="og:title" content="redis底层数据结构">
 <meta property="og:url" content="http://yoursite.com/2020/06/23/redis%E5%BA%95%E5%B1%82%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/index.html">
 <meta property="og:site_name" content="Inception">
+<meta property="og:description" content="1. List链表实质是链表，节点Node由三部分组成  前指针prev,后指针next,value本节点值  12345678struct list&amp;#123;  listNode *head;   &#x2F;&#x2F;队列第一个节点的指针  listNode *tail;   &#x2F;&#x2F;队列最后一个节点的指针  unsigned long len; &#x2F;&#x2F; 队列元素数量  void *(*dup)(void *ptr">
 <meta property="og:locale" content="cn">
+<meta property="og:image" content="http://yoursite.com/assets/blogimg/skiplist.png">
 <meta property="article:published_time" content="2020-06-23T13:33:30.000Z">
-<meta property="article:modified_time" content="2020-06-23T13:33:30.412Z">
+<meta property="article:modified_time" content="2020-06-24T04:32:43.799Z">
 <meta property="article:author" content="Cormick Kneey">
+<meta property="article:tag" content="database">
+<meta property="article:tag" content="redis">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/assets/blogimg/skiplist.png">
   
   
     <link rel="icon" href="/assets/img/favicon.png">
@@ -166,7 +172,42 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        
+        <h3 id="1-List链表"><a href="#1-List链表" class="headerlink" title="1. List链表"></a>1. List链表</h3><p>实质是链表，节点Node由三部分组成</p>
+<blockquote>
+<p>前指针prev,后指针next,value本节点值</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">list</span>&#123;</span></span><br><span class="line">  listNode *head;   <span class="comment">//队列第一个节点的指针</span></span><br><span class="line">  listNode *tail;   <span class="comment">//队列最后一个节点的指针</span></span><br><span class="line">  <span class="keyword">unsigned</span> <span class="keyword">long</span> len; <span class="comment">// 队列元素数量</span></span><br><span class="line">  <span class="keyword">void</span> *(*dup)(<span class="keyword">void</span> *ptr);<span class="comment">//节点复制函数</span></span><br><span class="line">  <span class="keyword">void</span> (*<span class="built_in">free</span>)(<span class="keyword">void</span> *ptr);<span class="comment">//节点释放函数</span></span><br><span class="line">  <span class="keyword">void</span>(*match)(<span class="keyword">void</span> *ptr,<span class="keyword">void</span> *key);节点对比函数</span><br><span class="line">&#125;<span class="built_in">list</span></span><br></pre></td></tr></table></figure>
+
+
+<h3 id="2-Set集合"><a href="#2-Set集合" class="headerlink" title="2. Set集合"></a>2. Set集合</h3><p>redis 中set三特性：唯一，确定，无序<br>两种编码方式：intset,hashtable</p>
+<ol>
+<li><p>intset:</p>
+<blockquote>
+<p>若集合类型全是整数，且元素数目不超过512个，则使用intset编码方式(集合对象使用整数集合作为底层实现)；由于它可以保存类型为int16_t、int32_t 或者int64_t 的整数值，故当新增元素大于原集合类型元素时，intset会整体升级，但是他不会进行降级的操作；</p>
+</blockquote>
+</li>
+<li><p>hashtable:</p>
+<blockquote>
+<p>编码的集合对象使用字典作为底层实现，字典的每个键对应着集合元素，字典的value值对应设置为null;</p>
+</blockquote>
+</li>
+</ol>
+<h3 id="3-order-set有序集合"><a href="#3-order-set有序集合" class="headerlink" title="3. order set有序集合"></a>3. order set有序集合</h3><p>为每个元素分配一个score值做为排序依据<br>两种编码方式:ziplist,skiplist</p>
+<ol>
+<li>ziplist(压缩表):<blockquote>
+<p>压缩表，适用于元素个数低于128个，且所有元素大小少于64字节；它的新增元素底层实现：每个集合元素使用紧挨着的压缩节点（entry）来保存，节点第一位保存的是成员value值，第二位是分数score值；<br>原理：压缩列表并不是对数据利用某种算法进行压缩，而是将数据按照一定规则编码在一块连续的内存区域，目的是节省内存；</p>
+</blockquote>
+</li>
+</ol>
+<ol start="2">
+<li>skiplist(跳表):<blockquote>
+<p>适用于大量的元素集合；新增元素的底层实现依靠跳跃表以及字典组合；</p>
+</blockquote>
+</li>
+</ol>
+<p><img src="/assets/blogimg/skiplist.png" alt="skiplist"></p>
+<h3 id="4-hash哈希表"><a href="#4-hash哈希表" class="headerlink" title="4. hash哈希表"></a>4. hash哈希表</h3><p>两种编码方式:skiplist,hashtable</p>
+
       
 
       
@@ -205,6 +246,21 @@
     <div class="article-info article-info-index">
       
       
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">database</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">redis</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
       
 
       
@@ -411,6 +467,14 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">滑动窗口</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">database</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color1">redis</a>
               </li>
             
             <div class="clearfix"></div>
