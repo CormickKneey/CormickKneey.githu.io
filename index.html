@@ -152,6 +152,195 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-Go逃逸分析" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2020/07/16/Go%E9%80%83%E9%80%B8%E5%88%86%E6%9E%90/">Go逃逸分析</a>
+    </h1>
+  
+
+        
+        <a href="/2020/07/16/Go%E9%80%83%E9%80%B8%E5%88%86%E6%9E%90/" class="archive-article-date">
+  	<time datetime="2020-07-15T23:07:58.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-07-16</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h3 id="栈"><a href="#栈" class="headerlink" title="栈"></a>栈</h3><p>由编译器进行管理，自动申请、分配、释放。一般不会太大，我们常见的函数参数，局部变量等等都会存放在栈上</p>
+<h3 id="堆"><a href="#堆" class="headerlink" title="堆"></a>堆</h3><p>一般来讲是人为手动进行管理，手动申请、分配、释放。一般所涉及的内存大小并不定，一般会存放较大的对象。另外其分配相对慢，涉及到的指令动作也相对多</p>
+<h3 id="避免逃逸的原因-why"><a href="#避免逃逸的原因-why" class="headerlink" title="避免逃逸的原因 why?"></a>避免逃逸的原因 why?</h3><ol>
+<li>过多的逃逸堆需要频繁程序GC回收</li>
+<li>申请、分配、回收内存的系统开销增大</li>
+<li>产生内存碎片</li>
+</ol>
+<h3 id="逃逸分析的作用-what"><a href="#逃逸分析的作用-what" class="headerlink" title="逃逸分析的作用 what?"></a>逃逸分析的作用 what?</h3><p>通过指针动态的方法，判断一个变量是应该放在堆上还是放在栈上<br>可以先假设所有的变量都放在栈上，发生一下条件时，会发生逃逸，移动到堆上:</p>
+<ol>
+<li><p>该变量被引用了(作用域之外引用)</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">GetInstance</span><span class="params">()</span>*<span class="title">Instance</span></span>&#123;</span><br><span class="line">  instance := <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">  <span class="keyword">return</span> &amp;instance</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">  Instance := GetInstance()</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//此时发生逃逸条件: 1. 引用指针对象 2. 作用域外</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">  instance := <span class="built_in">new</span>(<span class="keyword">string</span>)</span><br><span class="line">  *instance = <span class="string">"Golang!"</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//此时不发生逃逸: 1. 同一个作用域内，引用对象可看作局部变量</span></span><br></pre></td></tr></table></figure></li>
+<li><p>该变量被引用为不确定变量</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">  instance := <span class="built_in">new</span>(<span class="keyword">string</span>)</span><br><span class="line">  *instance = <span class="string">"Golang!"</span></span><br><span class="line">  fmt.Print(*instance)</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//此时发生逃逸条件: 1. 不确定对象</span></span><br><span class="line"><span class="comment">//func Print(a ...interface&#123;&#125;) (n int, err error) &#123;</span></span><br><span class="line"><span class="comment">//[interface] 代表不确定对象,会逃逸至堆上</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>该对象过大,尽管是局部变量但是还会被分配到堆上</p>
+</li>
+</ol>
+<h3 id="Tips"><a href="#Tips" class="headerlink" title="Tips:"></a>Tips:</h3><ol>
+<li><p>go build -gcflags ‘-m -l’ test.go   查看逃逸情况</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//举例:</span></span><br><span class="line">./test.<span class="keyword">go</span>:<span class="number">15</span>:<span class="number">17</span>: <span class="built_in">new</span>(<span class="keyword">string</span>) does not escape</span><br><span class="line">./test.<span class="keyword">go</span>:<span class="number">17</span>:<span class="number">11</span>: ... argument does not escape</span><br><span class="line">./test.<span class="keyword">go</span>:<span class="number">17</span>:<span class="number">12</span>: *instance escapes to heap</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>golang 的堆大小有1G，因此栈溢出的问题极少出现</p>
+</li>
+<li><p>结合代码层的理解</p>
+<blockquote>
+<p>堆：局部变量——–值传递<br>栈：引用对象——–引用传递</p>
+</blockquote>
+</li>
+</ol>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">golang</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">内存</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">逃逸分析</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2020/07/16/Go%E9%80%83%E9%80%B8%E5%88%86%E6%9E%90/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-golang下的设计模式-结构型模式" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2020/06/26/golang%E4%B8%8B%E7%9A%84%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/">golang下的设计模式-结构型模式</a>
+    </h1>
+  
+
+        
+        <a href="/2020/06/26/golang%E4%B8%8B%E7%9A%84%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/" class="archive-article-date">
+  	<time datetime="2020-06-26T06:22:44.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-06-26</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h3 id="结构型模式简介"><a href="#结构型模式简介" class="headerlink" title="结构型模式简介"></a>结构型模式简介</h3><p><strong>描述如何将类或者对 象结合在一起形成更大的结构，就像搭积木，可以通过 简单积木的组合形成复杂的、功能更为强大的结构。使用关联关系来替代继承关系</strong></p>
+<h4 id="外观模式-Facade-★★★★★"><a href="#外观模式-Facade-★★★★★" class="headerlink" title="- 外观模式(Facade)★★★★★"></a>- 外观模式(Facade)★★★★★</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewAPI</span><span class="params">()</span> <span class="title">API</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> &amp;apiImpl&#123;</span><br><span class="line">		a: NewAModuleAPI(),</span><br><span class="line">		b: NewBModuleAPI(),</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//入口</span></span><br><span class="line"><span class="keyword">type</span> API <span class="keyword">interface</span> &#123;</span><br><span class="line">	Test() <span class="keyword">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//facade implement</span></span><br><span class="line"><span class="keyword">type</span> apiImpl <span class="keyword">struct</span> &#123;</span><br><span class="line">	a AModuleAPI</span><br><span class="line">	b BModuleAPI</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(a *apiImpl)</span> <span class="title">Test</span><span class="params">()</span> <span class="title">string</span></span> &#123;</span><br><span class="line">	aRet := a.a.TestA()</span><br><span class="line">	bRet := a.b.TestB()</span><br><span class="line">	<span class="keyword">return</span> fmt.Sprintf(<span class="string">"%s\n%s"</span>, aRet, bRet)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//NewAModuleAPI return new AModuleAPI</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewAModuleAPI</span><span class="params">()</span> <span class="title">AModuleAPI</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> &amp;aModuleImpl&#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//AModuleAPI ...</span></span><br><span class="line"><span class="keyword">type</span> AModuleAPI <span class="keyword">interface</span> &#123;</span><br><span class="line">	TestA() <span class="keyword">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> aModuleImpl <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(*aModuleImpl)</span> <span class="title">TestA</span><span class="params">()</span> <span class="title">string</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="string">"A module running"</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//NewBModuleAPI return new BModuleAPI</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewBModuleAPI</span><span class="params">()</span> <span class="title">BModuleAPI</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> &amp;bModuleImpl&#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//BModuleAPI ...</span></span><br><span class="line"><span class="keyword">type</span> BModuleAPI <span class="keyword">interface</span> &#123;</span><br><span class="line">	TestB() <span class="keyword">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> bModuleImpl <span class="keyword">struct</span>&#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(*bModuleImpl)</span> <span class="title">TestB</span><span class="params">()</span> <span class="title">string</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="string">"B module running"</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">golang</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">设计模式</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2020/06/26/golang%E4%B8%8B%E7%9A%84%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F-%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-golang下的设计模式-创建型模式" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -653,6 +842,14 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">设计模式</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">内存</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">逃逸分析</a>
               </li>
             
             <div class="clearfix"></div>
